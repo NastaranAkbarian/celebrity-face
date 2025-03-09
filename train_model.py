@@ -2,18 +2,24 @@ import os
 import numpy as np
 import cv2
 import tensorflow as tf
+from keras.src.backend.numpy.nn import batch_normalization
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import VGG16
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten, Dropout
 import json  # برای ذخیره‌سازی class_indices
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import json
 
-# مسیر دیتاست
+
 dataset_path = "archive (1)/Celebrity Faces Dataset/"
 
-# تنظیمات پردازش داده‌ها
-img_size = 224  # اندازه تصاویر ورودی
-batch_size = 32  # تعداد داده‌های پردازش شده در هر مرحله
+
+img_size = 224
+batch_size = 32
 
 # ایجاد دسته‌های آموزش و تست
 datagen = ImageDataGenerator(rescale=1./255, validation_split=0.2)
@@ -42,37 +48,40 @@ print(f"Number of classes: {num_classes}")
 with open("class_indices.json", "w") as json_file:
     json.dump(train_generator.class_indices, json_file)
 
-# استفاده از VGG16 به عنوان مدل پایه (بدون لایه‌های آخر)
-base_model = VGG16(weights="imagenet", include_top=False, input_shape=(img_size, img_size, 3))
-
-# فریز کردن لایه‌های از پیش آموزش‌دیده
-for layer in base_model.layers:
-    layer.trainable = False
-
-# ایجاد مدل نهایی
 model = Sequential([
-    base_model,
+    # لایه‌های کانولوشن
+    Conv2D(32, (3, 3), activation='relu', input_shape=(img_size, img_size, 3)),
+    MaxPooling2D(pool_size=(2, 2)),
+
+    Conv2D(64, (3, 3), activation='relu'),
+    MaxPooling2D(pool_size=(2, 2)),
+
+    Conv2D(128, (3, 3), activation='relu'),
+    MaxPooling2D(pool_size=(2, 2)),
+
+    # لایه فلَت کردن برای انتقال به لایه‌های Dense
     Flatten(),
-    Dense(256, activation="relu"),
-    Dropout(0.5),
-    Dense(num_classes, activation="softmax")  # خروجی به تعداد افراد مشهور
+
+    # لایه‌های Dense برای طبقه‌بندی
+    Dense(512, activation='relu'),
+    Dropout(0.5),  # استفاده از Dropout برای جلوگیری از overfitting
+    Dense(num_classes, activation='softmax')  # خروجی به تعداد کلاس‌ها
 ])
 
-# کامپایل کردن مدل
 model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
 
-# نمایش ساختار مدل
+
 model.summary()
 
-# تعداد اپوک‌ها
+
 epochs = 20
 
-# آموزش مدل
+
 history = model.fit(
     train_generator,
     validation_data=val_generator,
     epochs=epochs
 )
 
-# ذخیره مدل برای استفاده در آینده
+
 model.save("celebrity_face_recognition_model.h5")
