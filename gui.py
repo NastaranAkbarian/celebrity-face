@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import cv2
-import model
+import modell
 
 
 root = tk.Tk()
@@ -38,7 +38,7 @@ def select_image():
     image_label.image = img
 
     # پیش‌بینی و نمایش نتیجه
-    celeb_name = model.predict_celeb(file_path)  # فراخوانی تابع از model.py
+    celeb_name = modell.predict_celeb(file_path)  # فراخوانی تابع از model.py
     result_label.config(text=f"شبیه‌ترین فرد: {celeb_name}")
 
 
@@ -79,7 +79,7 @@ def process_captured_image(file_path):
     image_label.image = img
 
     # پیش‌بینی و نمایش نتیجه
-    celeb_name = model.predict_celeb(file_path)  # استفاده از model.py
+    celeb_name = modell.predict_celeb(file_path)  # استفاده از model.py
     result_label.config(text=f"شبیه‌ترین فرد: {celeb_name}")
 
 
