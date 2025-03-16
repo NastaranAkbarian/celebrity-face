@@ -1,14 +1,19 @@
 import os
 import numpy as np
-import cv2
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import VGG16
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Flatten, Dropout
 
-# مسیر دیتاست
-dataset_path = "archive (1)/Celebrity Faces Dataset/"
+# مسیر دقیق دیتاست
+dataset_path = "C:/Users/ASUS/PycharmProjects/celebrity-face/archive (1)/Celebrity Faces Dataset/"
+
+# بررسی وجود پوشه
+if os.path.exists(dataset_path):
+    print("Dataset path exists.")
+else:
+    print("Dataset path does not exist. Please check the path.")
 
 # تنظیمات پردازش داده‌ها
 img_size = 224  # اندازه تصاویر ورودی
@@ -33,8 +38,11 @@ val_generator = datagen.flow_from_directory(
     subset="validation"
 )
 
+# بررسی خروجی train_generator
+print(f"Class indices: {train_generator.class_indices}")
+
 # گرفتن تعداد کلاس‌ها (افراد مشهور)
-num_classes = len(train_generator.class_indices)
+num_classes = len(train_generator.class_indices)  # استخراج تعداد کلاس‌ها از train_generator
 print(f"Number of classes: {num_classes}")
 
 # استفاده از VGG16 به عنوان مدل پایه (بدون لایه‌های آخر)
@@ -62,7 +70,7 @@ model.summary()
 # تعداد اپوک‌ها
 epochs = 10
 
-# آموزش مدل بدون workers و max_queue_size
+# آموزش مدل
 history = model.fit(
     train_generator,
     validation_data=val_generator,
@@ -71,32 +79,3 @@ history = model.fit(
 
 # ذخیره مدل برای استفاده در آینده
 model.save("celebrity_face_recognition_model.h5")
-
-
-# تابع پیش‌بینی تصویر
-def predict_celeb(image_path, model, class_indices):
-    # پردازش تصویر ورودی
-    img = cv2.imread(image_path)
-    if img is None:
-        print(f"Error: The image at {image_path} could not be loaded.")
-        return
-
-    img = cv2.resize(img, (img_size, img_size))  # تغییر اندازه تصویر
-    img = img / 255.0  # نرمال‌سازی
-    img = np.expand_dims(img, axis=0)  # اضافه کردن بعد دسته‌ای
-
-    # پیش‌بینی
-    predictions = model.predict(img)
-    predicted_class = np.argmax(predictions)
-
-    # پیدا کردن نام فرد مشهور
-    celeb_name = list(class_indices.keys())[list(class_indices.values()).index(predicted_class)]
-    return celeb_name
-
-
-# تست پیش‌بینی با یک تصویر
-image_path = 'archive (1)/Celebrity Faces Dataset/your_image.jpg'  # مسیر دقیق تصویر
-model = tf.keras.models.load_model("celebrity_face_recognition_model.h5")
-
-celebrity = predict_celeb(image_path, model, train_generator.class_indices)
-print(f"Predicted celebrity: {celebrity}")
